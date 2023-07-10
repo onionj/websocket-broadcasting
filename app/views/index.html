@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{.Title}}</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 0;
+                padding: 20px;
+                background-color: #f8f8f8;
+            }
+
+            .container {
+                max-width: 800px; /* Increased width */
+                margin: 0 auto;
+                background-color: #fff;
+                padding: 20px;
+                border-radius: 4px;
+                box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+                display: flex;
+            }
+
+            .section {
+                flex: 1;
+                margin-right: 20px;
+            }
+
+            .section-title {
+                font-size: 18px;
+                color: #333;
+                margin-bottom: 10px;
+            }
+
+            .form-group {
+                margin-bottom: 10px;
+            }
+
+            .form-group input[type="text"] {
+                padding: 10px;
+                font-size: 14px;
+                border-radius: 4px;
+                border: 1px solid #ccc;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .form-group button {
+                padding: 10px;
+                font-size: 14px;
+                border-radius: 4px;
+                background-color: #007bff;
+                color: white;
+                border: none;
+                cursor: pointer;
+                width: 100%;
+                box-sizing: border-box;
+            }
+
+            .form-group button.connected {
+                background-color: green;
+            }
+
+            .message-list {
+                list-style-type: none;
+                padding: 0;
+                margin: 0;
+            }
+
+            .message-item {
+                margin-bottom: 10px;
+                font-size: 14px;
+                color: #333;
+                padding: 10px;
+                background-color: #f2f2f2;
+                border-radius: 4px;
+                word-break: break-all;
+            }
+
+            .message-timestamp {
+                color: #999;
+                font-size: 12px;
+            }
+        </style>
+        <script>
+            var webSocketHost = "{{.WebSocketHost}}";
+            var ws;
+
+            function connectWebSocket(event) {
+                event.preventDefault();
+
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.close();
+                    ws = null;
+                    document.getElementById("websocketHost").disabled = false;
+                    document.getElementById("connectBtn").textContent = "Connect";
+                    document.getElementById("connectBtn").classList.remove("connected");
+                    return;
+                }
+
+                ws = new WebSocket(webSocketHost);
+
+                ws.addEventListener('open', function(event) {
+                    document.getElementById("websocketHost").disabled = true;
+                    document.getElementById("connectBtn").textContent = "Connected";
+                    document.getElementById("connectBtn").classList.add("connected");
+                });
+
+                ws.addEventListener('message', function(event) {
+                    var jsonMessage = JSON.parse(event.data);
+                    var messages = document.getElementById('messages');
+
+                    if (!jsonMessage.sent) {
+                        var message = document.createElement('li');
+                        var content = document.createTextNode(jsonMessage.content);
+                        var timestamp = document.createElement('span');
+                        timestamp.classList.add("message-timestamp");
+                        timestamp.textContent = " (" + jsonMessage.timestamp + ")";
+                        message.appendChild(content);
+                        message.appendChild(timestamp);
+                        message.classList.add("message-item");
+                        messages.appendChild(message);
+                    }
+                });
+
+                ws.addEventListener('close', function(event) {
+                    console.log('WebSocket connection closed. Reconnecting...');
+                    connectWebSocket(event);
+                });
+            }
+
+            function sendPush(event) {
+                event.preventDefault();
+
+                var contentInput = document.getElementById('pushContent');
+                var content = contentInput.value;
+
+                fetch('/push', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content: content })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Push notification sent:', data.content);
+                    contentInput.value = '';
+                })
+                .catch(error => {
+                    console.error('Error sending push notification:', error);
+                });
+            }
+        </script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="section">
+                <h2 class="section-title">WebSocket Clients</h2>
+                <form class="form-group" action="" onsubmit="connectWebSocket(event)">
+                    <input type="text" id="websocketHost" placeholder="WebSocket Host" value="{{.WebSocketHost}}" required>
+                    <button id="connectBtn">Connect</button>
+                </form>
+                <ul class="message-list" id='messages'></ul>
+            </div>
+
+            <div class="section">
+                <h2 class="section-title">Send Push Notification</h2>
+                <form class="form-group" id="pushForm" onsubmit="sendPush(event)">
+                    <input type="text" id="pushContent" placeholder="Notification Content" required>
+                    <button type="submit">Send</button>
+                </form>
+            </div>
+        </div>
+    </body>
+</html>
