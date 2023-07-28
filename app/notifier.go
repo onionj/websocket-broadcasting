@@ -17,29 +17,22 @@ type Message struct {
 
 type Notifier struct {
 	connections map[*websocket.Conn]struct{}
-	mutex       sync.Mutex
 }
 
 func NewNotifier() *Notifier {
+
 	return &Notifier{
 		connections: make(map[*websocket.Conn]struct{}),
 	}
 }
 
 func (notifier *Notifier) AddConnection(conn *websocket.Conn) {
-	fmt.Println("Add Connection")
-
-	notifier.mutex.Lock()
-	defer notifier.mutex.Unlock()
-
 	notifier.connections[conn] = struct{}{}
+	fmt.Printf("Add connection, %d connection on this Process\n", len(notifier.connections))
 }
 
 func (notifier *Notifier) RemoveConnection(conn *websocket.Conn) error {
 	fmt.Println("Remove Connection")
-
-	notifier.mutex.Lock()
-	defer notifier.mutex.Unlock()
 
 	if _, ok := notifier.connections[conn]; ok {
 		delete(notifier.connections, conn)
@@ -50,8 +43,6 @@ func (notifier *Notifier) RemoveConnection(conn *websocket.Conn) error {
 	return errors.New("connection not found")
 }
 func (notifier *Notifier) Push(messageJSON []byte) {
-	notifier.mutex.Lock()
-	defer notifier.mutex.Unlock()
 
 	var wg sync.WaitGroup
 
