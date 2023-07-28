@@ -5,8 +5,6 @@
 
 This project demonstrates a WebSocket broadcasting application with multi-processing capabilities using Fiber and RabbitMQ as the message broker. It allows multiple processes to handle WebSocket connections and efficiently broadcast messages to connected clients.
 
-Each process has a bound queue to a FANOUT exchange. When we push a message to this exchange, all queues receive the message and send it to connected websockets.
-
 Please note that the project uses the following technologies:
 
 - [Go-Fiber](https://github.com/gofiber/fiber): A fast and efficient web framework for Go.
