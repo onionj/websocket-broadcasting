@@ -104,6 +104,7 @@ func main() {
 		}
 	}))
 
+	// push notification
 	app.Post("/push", basicauth.New(authConfig), func(c *fiber.Ctx) error {
 		var requestBody struct {
 			Content string `json:"content"`
