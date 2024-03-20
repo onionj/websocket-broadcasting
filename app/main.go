@@ -66,11 +66,11 @@ func main() {
 	log.Printf("Binding queue %s to exchange %s with routing key", q.Name, EXCHANGE_NAME)
 
 	// Subscribing to QueueService1 for getting messages.
-	qNessages, err := ch.Consume(q.Name, "", true, false, false, false, nil)
+	qMessages, err := ch.Consume(q.Name, "", true, false, false, false, nil)
 	failOnError("Failed to Consume", err)
 
 	go func() {
-		for d := range qNessages {
+		for d := range qMessages {
 			messageJSON, err := notifier.CreateMessage(string(d.Body))
 			if err != nil {
 				fmt.Println(err)
@@ -125,7 +125,7 @@ func main() {
 				ContentType: "text/plain",
 				Body:        []byte(requestBody.Content),
 			})
-		failOnError("Failed to publish a message", err)
+		log.Println("Failed to publish a message", err)
 
 		return c.Status(fiber.StatusAccepted).JSON(fiber.Map{"content": requestBody.Content})
 	})
